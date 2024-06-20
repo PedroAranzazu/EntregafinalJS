@@ -1,26 +1,28 @@
 let carrito = [];
 
-
 async function obtenerProductos() {
     try {
-        const listadeproductos = await fetch('./product.json');
-        if (!listadeproductos.ok) { 
-            throw new Error(`HTTP error! Status: ${listadeproductos.status}`);
+        const response = await fetch('./product.json');
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
         }
-        const productos = await listadeproductos.json();
+        const productos = await response.json();
 
- 
-        localStorage.setItem('productos', JSON.stringify(productos));
+       
+        const productosMezclados = _.shuffle(productos.products);
+
+        localStorage.setItem('productos', JSON.stringify(productosMezclados));
         
-        renderizarProductos(productos.products);
+        renderizarProductos(productosMezclados);
     } catch (error) {
-        console.error(`Hubo un error: ${error.message}`); 
+        console.error(`Hubo un error: ${error.message}`);
     }
 }
 
-
 function renderizarProductos(productos) {
     const contenedorProductos = document.getElementById('productos-container');
+    contenedorProductos.innerHTML = ''; 
+
     productos.forEach(producto => {
         const divProducto = document.createElement('div');
         divProducto.className = 'card mb-3';
@@ -37,9 +39,8 @@ function renderizarProductos(productos) {
     });
 }
 
-
 function abrirModalProducto(productId) {
-    const productos = JSON.parse(localStorage.getItem('productos')).products;
+    const productos = JSON.parse(localStorage.getItem('productos'));
     const producto = productos.find(p => p.id === productId);
     
     const modalProductName = document.getElementById('modal-product-name');
@@ -54,9 +55,8 @@ function abrirModalProducto(productId) {
     productoModal.show();
 }
 
-
 function agregarAlCarrito(productId) {
-    const productos = JSON.parse(localStorage.getItem('productos')).products;
+    const productos = JSON.parse(localStorage.getItem('productos'));
     const producto = productos.find(p => p.id === productId);
     
     const productoEnCarrito = carrito.find(p => p.id === productId);
@@ -66,7 +66,6 @@ function agregarAlCarrito(productId) {
         carrito.push({ ...producto, cantidad: 1 });
     }
 
- 
     localStorage.setItem('carrito', JSON.stringify(carrito));
 
     actualizarCarrito();
@@ -97,11 +96,9 @@ function actualizarCarrito() {
 
     document.getElementById('total-price').textContent = total.toFixed(2);
 
-  
     const carritoModal = new bootstrap.Modal(document.getElementById('carritoModal'));
     carritoModal.show();
 }
-
 
 function cambiarCantidad(productId, cantidad) {
     const producto = carrito.find(p => p.id === productId);
@@ -111,7 +108,6 @@ function cambiarCantidad(productId, cantidad) {
             carrito = carrito.filter(p => p.id !== productId);
         }
         localStorage.setItem('carrito', JSON.stringify(carrito));
- 
         actualizarCarritoSinModal();
     }
 }
@@ -142,26 +138,15 @@ function actualizarCarritoSinModal() {
     document.getElementById('total-price').textContent = total.toFixed(2);
 }
 
-function agregarAlCarrito(productId) {
-    const productos = JSON.parse(localStorage.getItem('productos')).products;
-    const producto = productos.find(p => p.id === productId);
-    
-    const productoEnCarrito = carrito.find(p => p.id === productId);
-    if (productoEnCarrito) {
-        productoEnCarrito.cantidad++;
-    } else {
-        carrito.push({ ...producto, cantidad: 1 });
+function cargarCarrito() {
+    const carritoAlmacenado = JSON.parse(localStorage.getItem('carrito'));
+    if (carritoAlmacenado) {
+        carrito = carritoAlmacenado;
+        actualizarCarritoSinModal();
     }
-
-    localStorage.setItem('carrito', JSON.stringify(carrito));
-    const carritoModal = new bootstrap.Modal(document.getElementById('carritoModal'));
-    carritoModal.show();
-
-    actualizarCarritoSinModal();
 }
 
-
-
-
-obtenerProductos();
-cargarCarrito();
+window.onload = () => {
+    obtenerProductos();
+    cargarCarrito();
+};
